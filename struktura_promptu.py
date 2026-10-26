@@ -1,30 +1,23 @@
 import os
 import sys
 import time
-
 from dotenv import load_dotenv
-from groq import APIError, Groq
+from groq import Groq
+from groq import APIError
 import ollama
 
-# poprawne wyświetlanie polskich znaków w konsoli Windows
-if hasattr(sys.stdout, 'reconfigure'):
-    sys.stdout.reconfigure(encoding='utf-8')
+sys.stdout.reconfigure(encoding='utf-8')
 
 load_dotenv()
 client = Groq(api_key=os.getenv('GROQ_API_KEY'))
 
-# testujemy dwa modele: zewnętrzny (API) i lokalny (Ollama)
 MODEL = 'openai/gpt-oss-120b'
 MODEL_LOKALNY = 'llama3.1'
 
-# Krok 1 - prompt bez struktury
 PROMPT_BEZ_STRUKTURY = 'Napisz wprowadzenie do raportu o wykrywaniu ataków sieciowych.'
 
-# Kroki 2-3 - dekompozycja i prompt ze strukturą (rola + zadanie + kontekst + format)
-ROLA = (
-    'Jesteś doświadczonym inżynierem cyberbezpieczeństwa '
-    'i autorem dokumentacji technicznej.'
-)
+ROLA = ('Jesteś doświadczonym inżynierem cyberbezpieczeństwa '
+        'i autorem dokumentacji technicznej.')
 PROMPT_ZE_STRUKTURA = (
     'Zadanie: napisz wprowadzenie do raportu technicznego '
     'z projektu studenckiego. '
@@ -41,10 +34,8 @@ PROMPT_ZE_STRUKTURA = (
 
 
 def uruchom(opis, prompt, rola=None):
-    print(f'\n\n{"#" * 64}\n###  ODPOWIEDZ -> {opis}\n{"#" * 64}')
-
-    # model zewnętrzny: Groq (API)
-    print(f'\n--- [{opis}] model zewnętrzny: {MODEL} ---')
+    print(f'\n\n{"#" * 64}\n### ODPOWIEDZ -> {opis}\n{"#" * 64}')
+    print(f'\n--- [{opis}] model zewnetrzny: {MODEL} ---')
     try:
         wiadomosci_api = [{'role': 'user', 'content': prompt}]
         if rola:
@@ -59,9 +50,7 @@ def uruchom(opis, prompt, rola=None):
         print(response.choices[0].message.content)
         print(f'Czas odpowiedzi: {time.perf_counter() - start:.2f} s')
     except APIError as e:
-        print(f'[Błąd Groq API] {e}')
-
-    # model lokalny: Ollama (rola trafia do wiadomości systemowej)
+        print(f'[Blad Groq API] {e}')
     print(f'\n--- [{opis}] model lokalny: {MODEL_LOKALNY} ---')
     try:
         wiadomosci = []
@@ -73,15 +62,11 @@ def uruchom(opis, prompt, rola=None):
         print(local['message']['content'])
         print(f'Czas odpowiedzi: {time.perf_counter() - start:.2f} s')
     except Exception as e:
-        print(f'[Błąd Ollama] {e}')
-        print(
-            f'Upewnij się, że serwer Ollama działa i model {MODEL_LOKALNY} '
-            f'jest pobrany (ollama pull {MODEL_LOKALNY}).'
-        )
+        print(f'[Blad Ollama] {e}')
+        print(f'Upewnij sie, ze serwer Ollama dziala i model {MODEL_LOKALNY} '
+              f'jest pobrany (ollama pull {MODEL_LOKALNY}).')
 
 
-# Krok 1 - bez struktury (bez roli systemowej)
 uruchom('KROK 1: prompt bez struktury', PROMPT_BEZ_STRUKTURY)
 
-# Krok 3 - ze strukturą; rola jako instrukcja systemowa
-uruchom('KROK 3: prompt ze strukturą', PROMPT_ZE_STRUKTURA, rola=ROLA)
+uruchom('KROK 3: prompt ze struktura', PROMPT_ZE_STRUKTURA, rola=ROLA)
